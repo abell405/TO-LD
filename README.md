@@ -6,14 +6,16 @@ A takeoff and landing performance calculator for the Piper PA-28-181 Archer. Ent
 
 ## What it does
 
-- Computes takeoff ground roll and takeoff over 50 ft (flaps 0° or 25°), and landing ground roll and landing over 50 ft.
-- Corrects for pressure altitude, temperature, weight, and headwind or tailwind, the same way the POH charts do.
+- Computes takeoff ground roll and takeoff over 50 ft (flaps 0° or 25°), and landing ground roll and landing over 50 ft, corrected for pressure altitude, temperature, weight and wind the way the POH charts do.
 - Works out pressure altitude, density altitude, and headwind/tailwind and crosswind components.
-- Runway Length Required is the longer of the takeoff and landing distances. T.O. and Ldg Distance Required are the chart distances, with no added margin.
-- Checks wind limits (17 kt crosswind, 10 kt tailwind, 30 kt surface wind including gusts).
-- Adds a soft-field allowance (adjustable in Settings).
-- Shows maneuvering speed from a Vo-by-weight table, plus Vr / Vy / Vx.
-- Flags a short runway, a tailwind, too much crosswind, overweight, and conditions outside the charts.
+- Fills the form fields this way:
+  - **T.O. Distance** = takeoff ground roll.
+  - **T.O. Distance Required** = takeoff ground roll + landing ground roll, or 2,000 ft if that is longer.
+  - **Ldg Distance** = landing distance over 50 ft, with no headwind credit (a tailwind still counts).
+  - **Ldg Distance Required** = Ldg Distance, +50% when the runway is wet, + 1,000 ft aimpoint.
+  - **Runway Length Required** = the larger of T.O. and Ldg Distance Required.
+  - **Maneuvering Speed** = Vo at landing weight (most conservative).
+- Checks the required distances against the runway, plus crosswind (17 kt), tailwind (10 kt) and surface wind (30 kt including gusts) limits.
 - Remembers your last inputs on your own device. Nothing is sent anywhere.
 
 ## Data sources
