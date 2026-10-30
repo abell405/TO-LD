@@ -1,0 +1,59 @@
+# Builds and deploys the site to GitHub Pages, with a fresh METAR for each
+# airport in METAR_IDS saved as metar.json next to index.html.
+# Runs on every push to main, every 10 minutes, and on demand.
+name: Deploy site with METAR
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Off the top of the hour (GitHub delays :00 runs most); KPGD routine METARs come out at :53
+    - cron: "2-59/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  METAR_IDS: KPGD
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch METAR from aviationweather.gov
+        run: |
+          mkdir -p _site
+          cp index.html README.md _site/
+          touch _site/.nojekyll
+          if curl -fsS --max-time 20 \
+               -A "TO-LD calculator (github.com/${{ github.repository }})" \
+               "https://aviationweather.gov/api/data/metar?ids=${METAR_IDS}&format=json" \
+               -o metar.tmp \
+             && python3 -c "import json,sys; d=json.load(open('metar.tmp')); sys.exit(0 if isinstance(d,list) and d else 1)"; then
+            mv metar.tmp _site/metar.json
+            echo "METAR saved:"; python3 -c "import json; [print(m.get('rawOb')) for m in json.load(open('_site/metar.json'))]"
+          else
+            echo "METAR fetch failed; publishing an empty list so the page hides the METAR card."
+            echo "[]" > _site/metar.json
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

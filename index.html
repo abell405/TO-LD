@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Archer TO/LD Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: EFB-style two-pane — inputs panel left, Pilotbase card right; stacks on phone */
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --line:#d5dbe2; --fg:#16202b; --muted:#5d6b7a;
+  --field:#f6f8fa; --accent:#c26a00; --accent-ink:#ffffff; --accent-soft:#fdf0de;
+  --ok:#1f7a45; --ok-soft:#e3f3ea; --warn:#a85d00; --warn-soft:#fdf0de; --bad:#b3261e; --bad-soft:#fbe6e4;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f151c; --panel:#18212b; --line:#2a3644; --fg:#e6edf3; --muted:#93a1b0;
+  --field:#0f151c; --accent:#f59e2b; --accent-ink:#1a1206; --accent-soft:#3a2a14;
+  --ok:#5cc98a; --ok-soft:#163626; --warn:#f2b25c; --warn-soft:#3a2a14; --bad:#ff8a80; --bad-soft:#3d1a18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151c; --panel:#18212b; --line:#2a3644; --fg:#e6edf3; --muted:#93a1b0;
+  --field:#0f151c; --accent:#f59e2b; --accent-ink:#1a1206; --accent-soft:#3a2a14;
+  --ok:#5cc98a; --ok-soft:#163626; --warn:#f2b25c; --warn-soft:#3a2a14; --bad:#ff8a80; --bad-soft:#3d1a18; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px;margin-bottom:16px}
+h1{font-family:var(--f-display);font-weight:700;font-size:30px;letter-spacing:.01em;margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.ptitle{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;letter-spacing:.02em}
+input,select{width:100%;font:500 16px var(--f-num);color:var(--fg);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:9px 10px;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.unitwrap{position:relative}
+.unitwrap input{padding-right:44px}
+.unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{flex:1;font:600 15px var(--f-body);padding:9px 6px;border:0;background:var(--field);color:var(--fg);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips button{font:600 13px var(--f-num);padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--fg);cursor:pointer}
+.chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.apinfo{font-size:12px;color:var(--muted);margin-top:6px}
+details{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--muted)}
+details .fields{margin-top:10px}
+.hint{font-size:11.5px;color:var(--muted);margin-top:3px}
+/* checks */
+.checks{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.chk{border-radius:6px;padding:8px 12px;font-weight:600;font-size:14px;border-left:4px solid}
+.chk.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.chk.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.chk.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+/* form card, mirrors Pilotbase rows */
+.card{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 12px}
+.cell{grid-column:span 3;min-width:0}
+.cell.t{grid-column:span 2}
+@media (max-width:520px){.cell,.cell.t{grid-column:span 3}.card{gap:10px}}
+.cell .lab{font-family:var(--f-display);font-weight:600;font-size:14px;letter-spacing:.02em;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.val{display:flex;align-items:baseline;justify-content:space-between;gap:6px;width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:9px 10px;font:700 18px var(--f-num);color:var(--fg);cursor:pointer;text-align:left;font-variant-numeric:tabular-nums;min-height:44px}
+.val small{font:500 11px var(--f-body);color:var(--muted)}
+.val.key{border-color:var(--accent)}
+.val.copied{background:var(--accent-soft)}
+.how{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.3}
+.sect{grid-column:1/-1;font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:3px;margin-top:6px}
+.foot{font-size:12px;color:var(--muted);margin-top:16px;max-width:75ch}
+.hbtns{display:flex;gap:8px;align-items:center}
+.tog{display:inline-flex;align-items:center;gap:10px;font:600 14px var(--f-body);padding:7px 12px 7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;white-space:nowrap}
+.tog .sw{position:relative;width:38px;height:22px;border-radius:999px;background:var(--line);transition:background .15s;flex:none}
+.tog .sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.tog[aria-checked="true"]{border-color:var(--accent)}
+.tog[aria-checked="true"] .sw{background:var(--accent)}
+.tog[aria-checked="true"] .sw::after{transform:translateX(16px)}
+@media (prefers-reduced-motion:reduce){.tog .sw,.tog .sw::after{transition:none}}
+header{position:relative}
+.hbtns{flex-wrap:wrap}
+.insum{display:none;align-items:center;justify-content:space-between;gap:8px;font:600 13px var(--f-num);color:var(--fg)}
+.insum span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.outbar{display:none;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:var(--muted)}
+.linkbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:12px;white-space:nowrap}
+.linkbtn:focus-visible{outline:2px solid var(--accent)}
+.val .tick{display:none;color:var(--ok);font:700 13px var(--f-body);margin-right:6px}
+.val.done .tick{display:inline}
+.val.done{border-color:var(--ok)}
+/* compact: one narrow column for iPad Split View beside Pilotbase */
+body.compact .wrap{max-width:440px;padding-block:10px 24px}
+body.compact header{margin-bottom:10px}
+body.compact h1{font-size:22px}
+body.compact .sub{display:none}
+body.compact .grid{grid-template-columns:minmax(0,1fr);gap:10px}
+body.compact .panel{padding:12px}
+body.compact .insum{display:flex}
+body.compact:not(.showin) #inPanel>.fields,body.compact:not(.showin) #inPanel>details,body.compact:not(.showin) #inTitle{display:none}
+body.compact.showin .insum{margin-bottom:10px}
+body.compact .metar{margin-bottom:10px}
+body.compact #outTitle{display:none}
+body.compact .outbar{display:flex}
+body.compact .checks{margin-bottom:8px}
+body.compact .chk{font-size:12.5px;padding:6px 10px}
+body.compact .card{display:flex;flex-direction:column;gap:3px}
+body.compact .cell{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+body.compact .cell .lab{font-size:13.5px;margin:0}
+body.compact .how{display:none}
+body.compact .val{min-height:36px;padding:5px 10px;font-size:16px;width:auto;min-width:118px;justify-content:flex-end;gap:6px}
+body.compact .val small{order:2}
+body.compact .sect{font-size:11px;margin-top:8px;padding-bottom:2px}
+body.compact .foot{display:none}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.metar{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:14px;background:var(--field)}
+.metar .mhead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;margin-bottom:6px}
+.metar .mlab{font-family:var(--f-display);font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.metar .age{font-size:12px;font-weight:600}
+.metar .age.ok{color:var(--ok)} .metar .age.old{color:var(--warn)}
+.metar code{display:block;font:500 13px/1.45 var(--f-num);color:var(--fg);white-space:pre-wrap;word-break:break-word}
+.metar .mfoot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px;font-size:12px;color:var(--muted)}
+.btn{font:600 14px var(--f-body);padding:8px 14px;border-radius:6px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+table.va{border-collapse:collapse;font:500 12px var(--f-num);margin-top:6px}
+table.va td{padding:2px 8px;border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>PA-28-181 <span>TO/LD</span> Performance</h1>
+    <div class="hbtns"><span class="sub">POH Section 5 charts (Report VB-2960)</span><button type="button" class="tog" id="compactBtn" role="switch" aria-checked="false">Compact view <span class="sw" aria-hidden="true"></span></button></div>
+  </header>
+
+  <div class="grid">
+    <section class="panel" id="inPanel" aria-labelledby="inTitle">
+      <h2 class="ptitle" id="inTitle">Today's conditions</h2>
+      <div class="metar" id="metarBox" hidden>
+        <div class="mhead"><span class="mlab" id="metarLab">Latest METAR</span><span class="age" id="metarAge"></span></div>
+        <code id="metarRaw"></code>
+        <div class="mfoot"><button type="button" class="btn" id="metarUse">Use this METAR</button><span id="metarNote">Fills OAT, altimeter and wind as reported, and picks the runway most into the wind.</span></div>
+      </div>
+      <div class="insum"><span id="inSumText"></span><button type="button" class="linkbtn" id="inEdit">Edit inputs</button></div>
+      <div class="fields">
+        <div><label for="icao">ICAO</label><input id="icao" autocapitalize="characters" autocomplete="off" value="KPGD"></div>
+        <div><label for="rwy">Runway #</label><input id="rwy" autocapitalize="characters" autocomplete="off" value="22"></div>
+        <div class="full"><div class="chips" id="rwyChips"></div><div class="apinfo" id="apInfo"></div></div>
+        <div class="full"><label>Runway condition</label>
+          <div class="seg" id="cond"><button type="button" data-v="Hard" aria-pressed="true">Hard</button><button type="button" data-v="Soft" aria-pressed="false">Soft</button></div></div>
+        <div><label for="oat">OAT</label><div class="unitwrap"><input id="oat" inputmode="decimal" value="15"><span class="unit">°C</span></div></div>
+        <div><label for="alt">Altimeter</label><div class="unitwrap"><input id="alt" inputmode="decimal" value="30.12"><span class="unit">inHg</span></div></div>
+        <div><label for="wdir">Wind dir</label><div class="unitwrap"><input id="wdir" inputmode="numeric" value="190"><span class="unit">°</span></div></div>
+        <div><label for="wspd">Wind speed</label><div class="unitwrap"><input id="wspd" inputmode="numeric" value="12"><span class="unit">kt</span></div></div>
+        <div><label for="gust">Gust (optional)</label><div class="unitwrap"><input id="gust" inputmode="numeric" placeholder="—"><span class="unit">kt</span></div></div>
+        <div><label>Takeoff flaps</label>
+          <div class="seg" id="flaps"><button type="button" data-v="0" aria-pressed="true">0°</button><button type="button" data-v="25" aria-pressed="false">25°</button></div></div>
+        <div><label for="tow">Takeoff weight</label><div class="unitwrap"><input id="tow" inputmode="numeric" value="2400"><span class="unit">lb</span></div></div>
+        <div><label for="ldw">Landing weight</label><div class="unitwrap"><input id="ldw" inputmode="numeric" value="2300"><span class="unit">lb</span></div></div>
+      </div>
+
+      <details id="ovr">
+        <summary>Airport not listed / overrides</summary>
+        <div class="fields">
+          <div><label for="oLen">Runway length</label><div class="unitwrap"><input id="oLen" inputmode="numeric" placeholder="auto"><span class="unit">ft</span></div></div>
+          <div><label for="oElev">Field elevation</label><div class="unitwrap"><input id="oElev" inputmode="numeric" placeholder="auto"><span class="unit">ft</span></div></div>
+          <div class="full"><label for="oHdg">Runway heading (magnetic)</label><div class="unitwrap"><input id="oHdg" inputmode="numeric" placeholder="auto"><span class="unit">°</span></div>
+            <div class="hint">Blank uses the airport table, or Runway # × 10.</div></div>
+        </div>
+      </details>
+
+      <details id="setd">
+        <summary>Settings</summary>
+        <div class="fields">
+          <div><label for="sHW">Headwind credit</label><div class="unitwrap"><input id="sHW" inputmode="numeric" value="100"><span class="unit">%</span></div></div>
+          <div><label for="sSoftTO">Soft: add to T.O. roll</label><div class="unitwrap"><input id="sSoftTO" inputmode="numeric" value="15"><span class="unit">%</span></div></div>
+          <div><label for="sSoftLD">Soft: add to Ldg roll</label><div class="unitwrap"><input id="sSoftLD" inputmode="numeric" value="15"><span class="unit">%</span></div></div>
+          <div><label for="sVr">Vr</label><div class="unitwrap"><input id="sVr" inputmode="numeric" value="60"><span class="unit">kt</span></div></div>
+          <div><label for="sVy">Vy</label><div class="unitwrap"><input id="sVy" inputmode="numeric" value="76"><span class="unit">kt</span></div></div>
+          <div><label for="sVx">Vx</label><div class="unitwrap"><input id="sVx" inputmode="numeric" value="64"><span class="unit">kt</span></div></div>
+          <div><label for="sLean">Lean at DA ≥</label><div class="unitwrap"><input id="sLean" inputmode="numeric" value="3000"><span class="unit">ft</span></div></div>
+          <div><label for="sVar">Mag variation (E +)</label><div class="unitwrap"><input id="sVar" inputmode="decimal" value="0"><span class="unit">°</span></div></div>
+          <div><label for="sXW">Max demo crosswind</label><div class="unitwrap"><input id="sXW" inputmode="numeric" value="17"><span class="unit">kt</span></div></div>
+          <div class="full hint">Distance Required = chart distance (no added margin). Runway Length Required is the greater of 2,000 ft or T.O. roll + Ldg roll. Leave variation 0 for ATIS/AWOS winds; use −6 at KPGD for METAR/TAF (true) winds. Va comes from the Vo table below.</div>
+          <div class="full"><table class="va" aria-label="Vo by weight"><tbody id="vaTable"></tbody></table></div>
+          <div class="full"><button type="button" id="reset" class="chips" style="all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:13px">Reset settings to defaults</button></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel" aria-labelledby="outTitle">
+      <h2 class="ptitle" id="outTitle">Pilotbase form · tap a value to copy</h2>
+      <div class="outbar"><span>Tap a value to copy · ✓ = copied</span><button type="button" class="linkbtn" id="clearTicks">Clear ✓</button></div>
+      <div class="checks" id="checks" aria-live="polite"></div>
+      <div class="card" id="card"></div>
+      <p class="foot">Distances are the POH Section 5 charts (paved, level, dry; full throttle before brake release), digitized and checked against each chart's printed example. All six land within 0–2.5% of the POH, on the long side, and are rounded up to the next 10 ft. They are planning numbers: use your judgment and the POH. Pressure altitudes below sea level use the sea-level line.</p>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast">Copied</div>
+
+<script>
+const DATA={"wts":[2000,2050,2150,2250,2350,2400,2450,2500,2550],"charts":{"f25p":{"pa":[[0,-0.25,1362.3,49.92,2198.4],[2000,-3.91,1559.0,46.26,2513.1],[4000,-8.05,1762.3,42.12,2886.9],[6000,-12.04,2018.0,38.13,3323.0],[8000,-16.02,2306.6,34.39,3837.7]],"r":[0.588,0.619,0.691,0.773,0.859,0.9,0.939,0.972,1],"cw":0,"ha":0.151,"hb":60,"ta":0.17,"tb":40},"f25r":{"pa":[[0,-0.32,959.0,50.16,1563.9],[2000,-4.29,1095.6,46.19,1788.3],[4000,-7.78,1251.7,42.38,2067.3],[6000,-11.98,1441.0,38.41,2383.4],[8000,-15.95,1651.7,34.6,2767.8]],"r":[0.54,0.572,0.64,0.709,0.786,0.832,0.884,0.942,1],"cw":0,"ha":0.212,"hb":0,"ta":0.23,"tb":0},"f0p":{"pa":[[0,0.07,1696.1,49.84,2741.8],[2000,-3.67,1934.6,45.96,3134.0],[4000,-7.87,2186.3,42.07,3591.5],[6000,-11.76,2490.2,38.02,4114.4],[8000,-15.88,2859.5,34.06,4738.6]],"r":[0.535,0.57,0.637,0.703,0.779,0.826,0.877,0.937,1],"cw":0,"ha":0.12,"hb":75,"ta":0.124,"tb":115},"f0r":{"pa":[[0,0.19,891.8,49.92,1473.6],[2000,-3.71,1026.9,46.02,1685.2],[4000,-7.76,1179.8,42.13,1943.8],[6000,-11.89,1346.3,38.0,2241.6],[8000,-15.79,1548.1,33.94,2594.3]],"r":[0.575,0.61,0.683,0.761,0.84,0.884,0.925,0.968,1],"cw":0,"ha":0.206,"hb":0,"ta":0.23,"tb":0},"lr":{"pa":[[0,0.32,862.1,49.8,1033.0],[2000,-4.02,912.7,45.79,1077.6],[4000,-8.03,961.3,41.44,1146.4],[6000,-11.24,1024.6,37.77,1229.3],[7000,-14.05,1060.9,35.96,1274.0]],"r":[0.806,0.824,0.859,0.894,0.929,0.947,0.965,0.982,1.0],"cw":0,"ha":0.142,"hb":84,"ta":0.17,"tb":78},"lp":{"pa":[[0,0.22,1353.8,49.6,1515.5],[2000,-3.78,1398.7,46.06,1561.8],[4000,-7.79,1454.6,42.26,1643.7],[6000,-11.66,1510.1,38.06,1734.0],[7000,-13.93,1541.2,36.25,1766.8]],"r":[0.768,0.789,0.831,0.873,0.916,0.937,0.958,0.979,1.0],"cw":165,"ha":0.1,"hb":140,"ta":0.21,"tb":0}}};
+const AIRPORTS={
+  KPGD:{elev:26,var:-6,name:"Punta Gorda",rwys:{"4":{hdg:35,w:150,tora:7193,lda:7193},"22":{hdg:215,w:150,tora:7193,lda:7193},"15":{hdg:155,w:150,tora:6286,lda:6015,note:"271 ft displaced threshold"},"33":{hdg:335,w:150,tora:6166,lda:6015,note:"declared distances"},"9":{hdg:95,w:60,tora:2635,lda:2635,noAuto:true},"27":{hdg:275,w:60,tora:2635,lda:2635,noAuto:true}}}
+};
+const VO=[[1950,99],[2000,100],[2050,101],[2100,103],[2150,104],[2200,105],[2250,106],[2300,107],[2350,108],[2400,110],[2450,111],[2500,112],[2550,113]];
+const SET_DEF={sHW:"100",sSoftTO:"15",sSoftLD:"15",sVr:"60",sVy:"76",sVx:"64",sLean:"3000",sVar:"0",sXW:"17"};
+const $=id=>document.getElementById(id);
+const num=(id,d=NaN)=>{const v=parseFloat(String($(id).value).replace(/,/g,''));return isFinite(v)?v:d};
+
+// ---- chart model (identical to the spreadsheet) ----
+function lerpIdx(xs,x){let i=0;for(let j=0;j<xs.length;j++)if(xs[j]<=x)i=j;return Math.min(Math.max(i,0),xs.length-2)}
+function chart(k,pa,t,w,hw){
+  const c=DATA.charts[k]; pa=Math.max(0,pa);
+  const ps=c.pa.map(l=>l[0]); const ds=c.pa.map(([p,t1,d1,t2,d2])=>d1+(t-t1)*(d2-d1)/(t2-t1));
+  let i=lerpIdx(ps,pa); let d=ds[i]+(pa-ps[i])*(ds[i+1]-ds[i])/(ps[i+1]-ps[i]);
+  const W=DATA.wts; let j=lerpIdx(W,w); const r=c.r[j]+(w-W[j])*(c.r[j+1]-c.r[j])/(W[j+1]-W[j]);
+  d=d*r+c.cw*(2550-w)/550;
+  d = hw>=0 ? d-hw/15*(c.ha*d+c.hb) : d+(-hw)/5*(c.ta*d+c.tb);
+  return d;
+}
+const ceil10=x=>Math.ceil(x/10)*10;
+const normRwy=r=>{r=String(r).trim().toUpperCase();return r.replace(/^0+(?=\d)/,'')};
+
+// ---- state ----
+const IDS=["icao","rwy","oat","alt","wdir","wspd","gust","tow","ldw","oLen","oElev","oHdg",...Object.keys(SET_DEF)];
+let cond="Hard",flaps=0; const TICKS={};
+// Runway and PA-28-181 wind limits
+const LIMITS={minRwy:2000,minWidth:50,maxTail:10,maxWind:30};
+function save(){try{const o={cond,flaps};IDS.forEach(i=>o[i]=$(i).value);localStorage.setItem("told",JSON.stringify(o))}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem("told")||"null");if(!o)return;IDS.forEach(i=>{if(o[i]!=null)$(i).value=o[i]});cond=o.cond||"Hard";flaps=+o.flaps||0}catch(e){}}
+function segSet(id,v){$(id).querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v==String(v))))}
+
+function compute(){
+  const icao=$("icao").value.trim().toUpperCase(), rwyRaw=$("rwy").value.trim().toUpperCase(), rk=normRwy(rwyRaw);
+  const ap=AIRPORTS[icao], rw=ap&&ap.rwys[rk];
+  const oLen=num("oLen"),oElev=num("oElev"),oHdg=num("oHdg");
+  const elev=isFinite(oElev)?oElev:(ap?ap.elev:NaN);
+  const tora=isFinite(oLen)?oLen:(rw?rw.tora:NaN), lda=isFinite(oLen)?oLen:(rw?rw.lda:NaN);
+  const hdg=isFinite(oHdg)?oHdg:(rw?rw.hdg:(parseInt(rk,10)*10));
+  const vrb=/VRB/i.test($("wdir").value);
+  const oat=num("oat"),alt=num("alt"),wdir=num("wdir",0),wspd=num("wspd",0),gust=num("gust",0),tow=num("tow"),ldw=num("ldw");
+  const S=k=>parseFloat($(k).value);
+  const pa=(isFinite(elev)?elev:0)+(29.92-alt)*1000, isa=15-2*pa/1000, da=pa+120*(oat-isa);
+  const ang=((wdir-S("sVar"))-hdg)*Math.PI/180;
+  const hw=vrb?0:wspd*Math.cos(ang), xw=vrb?Math.max(wspd,gust):Math.abs(Math.max(wspd,gust)*Math.sin(ang)), side=(vrb||xw<0.5)?"":(Math.sin(ang)>0?"R":"L");
+  const hwUse=hw>=0?hw*S("sHW")/100:hw;
+  const f=flaps===25;
+  const toRoll=chart(f?"f25r":"f0r",pa,oat,tow,hwUse), to50=chart(f?"f25p":"f0p",pa,oat,tow,hwUse);
+  const ldRoll=chart("lr",pa,oat,ldw,hwUse), ld50=chart("lp",pa,oat,ldw,hwUse);
+  const softTO=cond==="Soft"?toRoll*S("sSoftTO")/100:0, softLD=cond==="Soft"?ldRoll*S("sSoftLD")/100:0;
+  const o={vrb,icao,rwyRaw,tora,lda,elev,pa,da,hw,xw,side,tow,ldw,oat,alt,wdir,wspd,gust,
+    toRoll:ceil10(toRoll+softTO), to50:ceil10(to50), toDist:ceil10(to50+softTO),
+    ldRoll:ceil10(ldRoll+softLD), ld50:ceil10(ld50), ldDist:ceil10(ld50+softLD)};
+  // Runway must be at least the greater of 2,000 ft or T.O. roll + Ldg roll
+  o.toReq=o.toDist; o.ldReq=o.ldDist; o.rollSum=o.toRoll+o.ldRoll; o.rwyReq=Math.max(LIMITS.minRwy,o.rollSum);
+  let va=VO[0][1]; VO.forEach(([w,v])=>{if(tow>=w)va=v});
+  o.va=va; o.vr=`${$("sVr").value} / ${$("sVy").value} / ${$("sVx").value}`; o.lean=da>=S("sLean")?"Yes":"No";
+  o.ap=ap; o.rw=rw; o.isa=isa;
+  return o;
+}
+
+const fmt=n=>isFinite(n)?Math.round(n).toLocaleString("en-US"):"—";
+function render(){
+  const o=compute(); save();
+  // runway chips + airport line
+  const ap=o.ap, chips=$("rwyChips"); chips.innerHTML="";
+  if(ap){Object.keys(ap.rwys).sort((a,b)=>a-b).forEach(r=>{const b=document.createElement("button");b.type="button";b.textContent=r;b.setAttribute("aria-pressed",String(normRwy($("rwy").value)===r));b.onclick=()=>{$("rwy").value=r;render()};chips.appendChild(b)})}
+  $("apInfo").textContent=ap?`${ap.name} · elev ${ap.elev} ft${o.rw?` · Rwy ${normRwy(o.rwyRaw)}: ${fmt(o.rw.tora)} ft takeoff / ${fmt(o.rw.lda)} ft landing${o.rw.note?" ("+o.rw.note+")":""}`:" · pick a runway"}`:"Not in the airport list. Enter runway length and field elevation under overrides.";
+  if(!ap||!o.rw)$("ovr").open=true;
+
+  const wind=o.wspd===0?"Calm":`${o.vrb?"VRB":String(Math.round(o.wdir)).padStart(3,"0")} @ ${o.wspd}${o.gust>0?" G"+o.gust:""}`;
+  const hwR=Math.round(o.hw);
+  const rows=[
+    ["sect","Airport"],
+    ["ICAO",o.icao||"—","",""],["Runway #",o.rwyRaw||"—","",""],
+    ["Runway Length",fmt(o.tora),"ft","Takeoff length (TORA)",1,"t"],["Runway Length Required",fmt(o.rwyReq),"ft",o.rollSum>=LIMITS.minRwy?"T.O. roll + Ldg roll":"2,000 ft minimum (rolls total "+fmt(o.rollSum)+")",1,"t"],["Runway Condition",cond,"","",0,"t"],
+    ["sect","Weather"],
+    ["OAT",isFinite(o.oat)?o.oat:"—","°C","",0,"t"],["Altimeter",isFinite(o.alt)?o.alt.toFixed(2):"—","inHg","",0,"t"],["Wind Direction and Speed",wind,"","",0,"t"],
+    ["Pressure Altitude",fmt(Math.round(o.pa/10)*10),"ft","Elev + (29.92 − altimeter) × 1,000"],["Density Altitude",fmt(Math.round(o.da/10)*10),"ft","PA + 120 × (OAT − ISA)"],
+    ["Head/Tail Comp",hwR>=0?`${hwR} head`:`${-hwR} tail`,"kt","Wind × cos(angle)"],["Crosswind Comp",`${Math.round(o.xw)}${o.side?" "+o.side:""}`,"kt","Gust used if entered"],
+    ["sect","Takeoff · flaps "+flaps+"°"],
+    ["T.O. Weight",fmt(o.tow),"lb",""],["T.O. Roll",fmt(o.toRoll),"ft","Ground roll chart"+(cond==="Soft"?" + soft add":""),1],
+    ["T.O. 50ft Obstacle",fmt(o.to50),"ft","Over-50-ft chart",1,"t"],["T.O. Distance",fmt(o.toDist),"ft",cond==="Soft"?"50 ft + soft add":"Same as 50 ft (hard)",1,"t"],["T.O. Distance Required",fmt(o.toReq),"ft","Chart distance, no added margin",1,"t"],
+    ["sect","Landing"],
+    ["Ldg Weight",fmt(o.ldw),"lb",""],["Ldg Roll",fmt(o.ldRoll),"ft","Ground roll chart"+(cond==="Soft"?" + soft add":""),1],
+    ["Ldg 50ft Obstacle",fmt(o.ld50),"ft","Over-50-ft chart",1,"t"],["Ldg Distance",fmt(o.ldDist),"ft",cond==="Soft"?"50 ft + soft add":"Same as 50 ft (hard)",1,"t"],["Ldg Distance Required",fmt(o.ldReq),"ft","Chart distance, no added margin",1,"t"],
+    ["sect","Speeds"],
+    ["Maneuvering Speed",o.va,"kt","Vo table, T.O. weight",0,"t"],["Rotation VY/VX",o.vr,"kt","Vr / Vy / Vx",0,"t"],["Full Throttle/Lean",o.lean,"","DA ≥ "+fmt(parseFloat($("sLean").value))+" ft → Yes",0,"t"]
+  ];
+  $("inSumText").textContent=`${o.icao||"—"} ${o.rwyRaw||""} · F${flaps} · ${fmt(o.tow)}/${fmt(o.ldw)}${cond==="Soft"?" · Soft":""}`;
+  const card=$("card"); card.innerHTML="";
+  rows.forEach(r=>{
+    if(r[0]==="sect"){const d=document.createElement("div");d.className="sect";d.textContent=r[1];card.appendChild(d);return}
+    const [lab,val,unit,how,key,cls]=r; const d=document.createElement("div"); d.className="cell"+(cls?" "+cls:"");
+    const l=document.createElement("div");l.className="lab";l.textContent=lab;l.title=lab;
+    const b=document.createElement("button");b.type="button";b.className="val"+(key?" key":"");b.setAttribute("aria-label",`${lab}: ${val} ${unit}. Copy`);
+    b.innerHTML=`<i class="tick" aria-hidden="true">✓</i><span></span><small>${unit}</small>`;b.children[1].textContent=val;
+    if(TICKS[lab]===String(val))b.classList.add("done");
+    b.onclick=()=>{TICKS[lab]=String(val);b.classList.add("done");copy(String(val).replace(/,/g,""),b)};
+    d.append(l,b); if(how){const h=document.createElement("div");h.className="how";h.textContent=how;d.appendChild(h)}
+    card.appendChild(d);
+  });
+
+  // checks
+  const ck=[];
+  if(!o.ap||!o.rw){if(!isFinite(o.tora))ck.push(["warn",`${o.icao||"Airport"} rwy ${o.rwyRaw||"?"} is not in the list. Enter runway length and field elevation under overrides.`]);}
+  if(isFinite(o.tora)){
+    const rwyLen=Math.min(o.tora,o.lda), short=[];
+    if(o.rwyReq>rwyLen)short.push(`Requires ${fmt(o.rwyReq)} ft, runway has ${fmt(rwyLen)} ft`);
+    if(o.toDist>o.tora)short.push(`T.O. distance ${fmt(o.toDist)} ft exceeds ${fmt(o.tora)} ft available`);
+    if(o.ldDist>o.lda)short.push(`Ldg distance ${fmt(o.ldDist)} ft exceeds ${fmt(o.lda)} ft available`);
+    if(short.length)ck.push(["bad","Runway too short: "+short.join("; ")]);
+    else ck.push(["ok",`Runway OK: needs ${fmt(o.rwyReq)} ft, has ${fmt(rwyLen)} ft`]);
+    if(o.rw&&o.rw.w&&o.rw.w<LIMITS.minWidth)ck.push(["bad",`Runway ${o.rw.w} ft wide: minimum is ${LIMITS.minWidth} ft`]);
+  }
+  if(Math.max(o.tow,o.ldw)>2550)ck.push(["bad","Weight above 2,550 lb max gross"]); else if(Math.min(o.tow,o.ldw)<2000)ck.push(["warn","Weight below 2,000 lb: charts extrapolated"]);
+  if(o.pa>8000)ck.push(["warn","Pressure altitude above 8,000 ft: charts extrapolated"]); else if(o.pa>7000)ck.push(["warn","Pressure altitude above 7,000 ft: landing charts extrapolated"]);
+  if(o.oat<o.isa-15||o.oat>o.isa+35)ck.push(["warn","OAT outside the charts (ISA −15 to ISA +35 °C): extrapolated"]);
+  if(o.hw<-LIMITS.maxTail)ck.push(["bad",`Tailwind ${Math.round(-o.hw)} kt exceeds max ${LIMITS.maxTail} kt`]);
+  else if(o.hw<-5)ck.push(["warn",`Tailwind ${Math.round(-o.hw)} kt: beyond the 5 kt the charts show (extrapolated)`]);
+  else if(o.hw<-0.5)ck.push(["warn",`Tailwind ${Math.round(-o.hw)} kt`]);
+  const peak=Math.max(o.wspd,o.gust||0);
+  if(peak>LIMITS.maxWind)ck.push(["bad",`Surface wind ${peak} kt (incl. gusts) exceeds max ${LIMITS.maxWind} kt`]);
+  if(o.xw>parseFloat($("sXW").value))ck.push(["bad",`Crosswind ${Math.round(o.xw)} kt exceeds max demonstrated ${$("sXW").value} kt`]);
+  if(cond==="Soft"&&flaps===0)ck.push(["warn","Soft field with flaps up: POH soft-field technique uses flaps 25"]);
+  if(o.vrb&&o.wspd>0)ck.push(["warn","Variable wind: no headwind credit used; full speed counted as crosswind"]);
+  $("checks").innerHTML="";ck.forEach(([c,t])=>{const d=document.createElement("div");d.className="chk "+c;d.textContent=(c==="ok"?"✓ ":"⚠ ")+t;$("checks").appendChild(d)});
+}
+
+let tt;
+function copy(text,el){
+  const done=()=>{el.classList.add("copied");$("toast").textContent="Copied "+text;$("toast").classList.add("on");clearTimeout(tt);tt=setTimeout(()=>{$("toast").classList.remove("on");el.classList.remove("copied")},1100)};
+  try{navigator.clipboard.writeText(text).then(done,()=>sel(el))}catch(e){sel(el)}
+}
+function sel(el){const r=document.createRange();r.selectNodeContents(el.children[1]||el);const s=getSelection();s.removeAllRanges();s.addRange(r)}
+
+// va table
+$("vaTable").innerHTML="<tr>"+VO.slice().reverse().map(([w])=>`<td>${w}</td>`).join("")+"</tr><tr>"+VO.slice().reverse().map(([,v])=>`<td>${v}</td>`).join("")+"</tr>";
+document.querySelector("table.va").parentElement.style.overflowX="auto";
+
+// ---- METAR (metar.json is published next to this page by a GitHub Actions job every 10 min) ----
+let METARS={};
+function parseMetar(m){
+  const raw=m.rawOb||""; const o={raw,icao:m.icaoId,obs:m.obsTime?m.obsTime*1000:Date.parse(m.reportTime)};
+  const w=raw.match(/\b(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT\b/);
+  if(w){o.dir=w[1];o.spd=+w[2];o.gust=w[3]?+w[3]:null}
+  else{o.dir=m.wdir==="VRB"?"VRB":m.wdir;o.spd=m.wspd;o.gust=m.wgst||null}
+  const a=raw.match(/\bA(\d{4})\b/); o.alt=a?+a[1]/100:(m.altim?+(m.altim/33.8639).toFixed(2):null);
+  o.temp=m.temp;
+  return o;
+}
+function showMetar(){
+  const icao=$("icao").value.trim().toUpperCase(), m=METARS[icao], box=$("metarBox");
+  if(!m){box.hidden=true;return}
+  box.hidden=false; $("metarLab").textContent=`Latest METAR · ${icao}`; $("metarRaw").textContent=m.raw;
+  const mins=Math.round((Date.now()-m.obs)/60000);
+  const age=$("metarAge"); age.textContent=isFinite(mins)?(mins<60?`${mins} min old`:`${Math.floor(mins/60)} h ${mins%60} min old`):"";
+  age.className="age "+(mins>90?"old":"ok");
+  $("metarNote").textContent=mins>90?"Over 90 minutes old. Check the current ATIS/AWOS.":"Fills OAT, altimeter and wind as reported, and picks the runway most into the wind.";
+}
+function useMetar(){
+  const icao=$("icao").value.trim().toUpperCase(), m=METARS[icao]; if(!m)return;
+  if(m.temp!=null)$("oat").value=Math.round(m.temp);
+  if(m.alt)$("alt").value=m.alt.toFixed(2);
+  if(m.spd===0){$("wdir").value="0";$("wspd").value="0"}
+  else if(m.spd!=null){
+    $("wdir").value=m.dir==="VRB"?"VRB":String(Math.round(+m.dir)).padStart(3,"0");
+    $("wspd").value=m.spd;
+  }
+  $("gust").value=m.gust||"";
+  $("sVar").value="0";
+  let msg="METAR applied";
+  const ap=AIRPORTS[icao];
+  if(ap&&m.spd>0&&m.dir!=="VRB"){
+    // pick the runway with the most headwind; ties (within 1 kt) go to less crosswind, then the longer runway
+    const wMag=+m.dir; let best=null;
+    Object.entries(ap.rwys).filter(([,d])=>!d.noAuto).forEach(([r,d])=>{
+      const a=(wMag-d.hdg)*Math.PI/180, hw=m.spd*Math.cos(a), xw=Math.abs(m.spd*Math.sin(a));
+      if(!best||hw>best.hw+1||(Math.abs(hw-best.hw)<=1&&(xw<best.xw-0.5||(Math.abs(xw-best.xw)<=0.5&&d.tora>best.len))))best={r,hw,xw,len:d.tora};
+    });
+    if(best){$("rwy").value=best.r;$("oHdg").value="";msg=`METAR applied · Rwy ${best.r}`}
+  }else if(ap){msg="METAR applied · calm/variable, runway unchanged"}
+  render(); $("toast").textContent=msg; $("toast").classList.add("on"); setTimeout(()=>$("toast").classList.remove("on"),1200);
+}
+$("metarUse").addEventListener("click",useMetar);
+$("icao").addEventListener("input",showMetar);
+// Reload metar.json every 5 minutes and whenever the page comes back on screen.
+// The ?t= query skips the browser and GitHub Pages caches so a newer report shows up right away.
+let lastMetarLoad=0;
+function loadMetar(){
+  lastMetarLoad=Date.now();
+  fetch("metar.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{
+    if(!Array.isArray(d))return;
+    const next={}; d.forEach(m=>{if(m&&m.icaoId&&m.rawOb)next[m.icaoId.toUpperCase()]=parseMetar(m)});
+    if(Object.keys(next).length)METARS=next;
+    showMetar();
+  }).catch(()=>{});
+}
+loadMetar();
+setInterval(showMetar,60000);
+setInterval(loadMetar,5*60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-lastMetarLoad>60000)loadMetar()});
+
+// ---- compact view (narrow column for iPad Split View) ----
+function setCompact(on){
+  document.body.classList.toggle("compact",on); $("compactBtn").setAttribute("aria-checked",String(on));
+  try{localStorage.setItem("toldCompact",on?"1":"0")}catch(e){}
+}
+$("compactBtn").addEventListener("click",()=>setCompact(!document.body.classList.contains("compact")));
+$("inEdit").addEventListener("click",()=>{const on=!document.body.classList.contains("showin");document.body.classList.toggle("showin",on);$("inEdit").textContent=on?"Hide inputs":"Edit inputs"});
+$("clearTicks").addEventListener("click",()=>{Object.keys(TICKS).forEach(k=>delete TICKS[k]);render()});
+let compactPref=null; try{compactPref=localStorage.getItem("toldCompact")}catch(e){}
+setCompact(location.hash==="#compact"||compactPref==="1");
+
+load(); segSet("cond",cond); segSet("flaps",flaps);
+$("cond").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;cond=b.dataset.v;segSet("cond",cond);render()});
+$("flaps").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;flaps=+b.dataset.v;segSet("flaps",flaps);render()});
+$("reset").addEventListener("click",()=>{Object.entries(SET_DEF).forEach(([k,v])=>$(k).value=v);render()});
+IDS.forEach(i=>$(i).addEventListener("input",render));
+render();
+</script>
+
+</body>
+</html>

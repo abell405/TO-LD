@@ -1,0 +1,24 @@
+# TO-LD — Archer TO/LD performance calculator
+
+Static site on GitHub Pages: https://abell405.github.io/TO-LD/
+
+Deployed by `.github/workflows/pages.yml` (Pages source must be "GitHub Actions"). It runs on every push to `main` and every 10 minutes, fetching the latest METAR for the airports in `METAR_IDS` from aviationweather.gov into `metar.json` beside `index.html`. aviationweather.gov blocks browser (CORS) requests, which is why the fetch happens in the workflow. To add METARs for another airport, add its ICAO to `METAR_IDS` (comma-separated).
+
+## Always push changes
+After ANY change to this project (code, airport data, settings, README), commit and push to `origin main` right away, without asking. GitHub Pages redeploys from `main`, so a push is how a change goes live. Tell the user it will be live at the URL above in a minute or two.
+
+## Project layout
+- `index.html` is the whole app: HTML, CSS and JS in one file, no build step, no backend.
+- `AIRPORTS` (near the top of the script) holds airport and runway data: field elevation, and per runway end the magnetic heading, takeoff length (TORA) and landing length (LDA). A runway with `noAuto:true` is never chosen by the METAR runway auto-pick (KPGD 9/27, not primary runways) but can still be picked by hand.
+- `DATA` holds the digitized PA-28-181 POH Section 5 chart data (Report VB-2960). Don't edit it unless re-digitizing the charts.
+- `metar.json` is not in the repo; the workflow creates it at deploy time. The page reads it, shows the METAR, and the "Use this METAR" button fills OAT, altimeter and wind exactly as the METAR reports it (no true-to-magnetic conversion, by the user's choice) and picks the runway most into the wind.
+- Density altitude formula (keep as is): DA = PA + 120 × (OAT − ISA), with ISA = 15 − 2 × PA/1,000.
+- `VO` is the maneuvering-speed (Vo) by weight table. `SET_DEF` holds the default settings (Vr 60, Vy 76, Vx 64, etc.).
+- `LIMITS` holds the runway and wind limits: Runway Length Required = greater of 2,000 ft or T.O. roll + Ldg roll; runway width ≥ 50 ft; PA-28-181 max tailwind 10 kt and max surface wind 30 kt incl. gusts. T.O./Ldg Distance Required equal the chart distances, with no added margin (user's choice).
+
+## Checks before pushing
+- Keep the chart math unchanged unless asked. It matches the POH printed examples within 0–2.5% (long side).
+- Syntax-check the script after edits (e.g. extract the `<script>` body and run it through `node`).
+
+## No company references
+This project must not name or reference the user's employer or flight school, or any company approval process, anywhere (page text, code comments, README, commit messages). Keep the limits as plain numbers.
