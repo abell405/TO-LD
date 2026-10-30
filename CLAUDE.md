@@ -20,5 +20,5 @@ After ANY change to this project (code, airport data, settings, README), commit 
 - Keep the chart math unchanged unless asked. It matches the POH printed examples within 0–2.5% (long side).
 - Syntax-check the script after edits (e.g. extract the `<script>` body and run it through `node`).
 
-## No company references
-This project must not name or reference the user's employer or flight school, or any company approval process, anywhere (page text, code comments, README, commit messages). Keep the limits as plain numbers.
+## Keep it generic
+Don't add any organization or business names anywhere in this project (page text, code comments, README, commit messages). Keep limits as plain numbers.
