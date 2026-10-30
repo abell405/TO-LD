@@ -13,7 +13,7 @@ A takeoff and landing performance calculator for the Piper PA-28-181 Archer. Ent
   - **T.O. Distance Required** = takeoff ground roll + landing ground roll, or 2,000 ft if that is longer.
   - **Ldg Distance** = landing distance over 50 ft, with no headwind credit (a tailwind still counts).
   - **Ldg Distance Required** = Ldg Distance, +50% when the runway is wet, + 1,000 ft aimpoint.
-  - **Runway Length Required** = takeoff ground roll + landing ground roll, or 2,000 ft if that is longer.
+  - **Runway Length Required** = the larger of T.O. and Ldg Distance Required.
   - **Maneuvering Speed** = Vo at landing weight (most conservative).
 - Checks the required distances against the runway, plus crosswind (17 kt), tailwind (10 kt) and surface wind (30 kt including gusts) limits.
 - Remembers your last inputs on your own device. Nothing is sent anywhere.

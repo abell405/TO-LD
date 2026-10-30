@@ -189,7 +189,7 @@ table.va td{text-align:right;padding:3px 14px;border-bottom:1px solid var(--line
           <div><label for="sLean">Lean at DA ≥</label><div class="unitwrap"><input id="sLean" inputmode="numeric" value="3000"><span class="unit">ft</span></div></div>
           <div><label for="sVar">Mag variation (E +)</label><div class="unitwrap"><input id="sVar" inputmode="decimal" value="0"><span class="unit">°</span></div></div>
           <div><label for="sXW">Max demo crosswind</label><div class="unitwrap"><input id="sXW" inputmode="numeric" value="17"><span class="unit">kt</span></div></div>
-          <div class="full hint">T.O. Distance Required = T.O. roll + Ldg roll, or 2,000 ft if longer. Ldg Distance Required = Ldg distance over 50 ft (no headwind credit), +50% when wet, + 1,000 ft aimpoint. Runway Length Required = T.O. roll + Ldg roll, or 2,000 ft if longer. Leave variation 0 for ATIS/AWOS winds; use −6 at KPGD for METAR/TAF (true) winds. Va comes from the Vo table below.</div>
+          <div class="full hint">T.O. Distance Required = T.O. roll + Ldg roll, or 2,000 ft if longer. Ldg Distance Required = Ldg distance over 50 ft (no headwind credit), +50% when wet, + 1,000 ft aimpoint. Runway Length Required = the larger of the two. Leave variation 0 for ATIS/AWOS winds; use −6 at KPGD for METAR/TAF (true) winds. Va comes from the Vo table below.</div>
           <div class="full"><table class="va" aria-label="Maneuvering speed by weight"><thead><tr><th scope="col">Weight (lb)</th><th scope="col">Vo (kt)</th></tr></thead><tbody id="vaTable"></tbody></table></div>
           <div class="full"><button type="button" id="reset" class="chips" style="all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:13px">Reset settings to defaults</button></div>
         </div>
@@ -265,7 +265,7 @@ function compute(){
   o.toReq=Math.max(o.rollSum,LIMITS.minToRwy);         // T.O. roll + Ldg roll, or 2,000 ft if longer
   o.ldDist=o.ld50;                                     // Ldg Distance = over 50 ft, no headwind credit
   o.ldReq=ceil10(o.ld50*(wet?LIMITS.wetFactor:1))+LIMITS.aimpoint;  // +50% if wet, + 1,000 ft aimpoint
-  o.rwyReq=Math.max(o.rollSum,LIMITS.minToRwy);      // Runway Length Required: T.O. roll + Ldg roll, or 2,000 ft if longer
+  o.rwyReq=Math.max(o.toReq,o.ldReq);               // Runway Length Required: larger of T.O. and Ldg Distance Required
   let va=VO[0][1]; VO.forEach(([w,v])=>{if(ldw>=w)va=v});  // most conservative: landing weight
   o.va=va; o.vr=`${$("sVr").value} / ${$("sVy").value} / ${$("sVx").value}`; o.lean=da>=S("sLean")?"Yes":"No";
   o.ap=ap; o.rw=rw; o.isa=isa;
@@ -286,7 +286,7 @@ function render(){
   const rows=[
     ["sect","Airport"],
     ["ICAO",o.icao||"—","",""],["Runway #",o.rwyRaw||"—","",""],
-    ["Runway Length",fmt(o.tora),"ft","Takeoff length (TORA)",1,"t"],["Runway Length Required",fmt(o.rwyReq),"ft",o.rollSum>=LIMITS.minToRwy?"T.O. roll + Ldg roll":"2,000 ft (rolls total "+fmt(o.rollSum)+")",1,"t"],["Runway Condition","Hard","","",0,"t"],
+    ["Runway Length",fmt(o.tora),"ft","Takeoff length (TORA)",1,"t"],["Runway Length Required",fmt(o.rwyReq),"ft",o.toReq>=o.ldReq?"Larger of T.O. and Ldg required (T.O.)":"Larger of T.O. and Ldg required (Ldg)",1,"t"],["Runway Condition","Hard","","",0,"t"],
     ["sect","Weather"],
     ["OAT",isFinite(o.oat)?o.oat:"—","°C","",0,"t"],["Altimeter",isFinite(o.alt)?o.alt.toFixed(2):"—","inHg","",0,"t"],["Wind Direction and Speed",wind,"","",0,"t"],
     ["Pressure Altitude",fmt(Math.round(o.pa/10)*10),"ft","Elev + (29.92 − altimeter) × 1,000"],["Density Altitude",fmt(Math.round(o.da/10)*10),"ft","PA + 120 × (OAT − ISA)"],
