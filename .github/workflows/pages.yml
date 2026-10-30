@@ -37,16 +37,28 @@ jobs:
           mkdir -p _site
           cp index.html README.md _site/
           touch _site/.nojekyll
-          if curl -fsS --max-time 20 \
-               -A "TO-LD calculator (github.com/${{ github.repository }})" \
-               "https://aviationweather.gov/api/data/metar?ids=${METAR_IDS}&format=json" \
-               -o metar.tmp \
-             && python3 -c "import json,sys; d=json.load(open('metar.tmp')); sys.exit(0 if isinstance(d,list) and d else 1)"; then
+          UA="TO-LD calculator (github.com/${{ github.repository }})"
+          URL="https://aviationweather.gov/api/data/metar?ids=${METAR_IDS}&format=json&hours=3"
+          valid() { python3 -c "import json,sys; d=json.load(open('$1')); sys.exit(0 if isinstance(d,list) and any(m.get('rawOb') for m in d) else 1)" 2>/dev/null; }
+          ok=""
+          for try in 1 2 3; do
+            code=$(curl -sS --max-time 20 -A "$UA" -o metar.tmp -w "%{http_code}" "$URL" || echo "curl-error")
+            if [ "$code" = "200" ] && valid metar.tmp; then ok=1; break; fi
+            echo "Attempt $try: HTTP $code"; sleep $((try*10))
+          done
+          if [ -n "$ok" ]; then
             mv metar.tmp _site/metar.json
-            echo "METAR saved:"; python3 -c "import json; [print(m.get('rawOb')) for m in json.load(open('_site/metar.json'))]"
+            raw=$(python3 -c "import json; d=json.load(open('_site/metar.json')); d.sort(key=lambda m: m.get('obsTime') or 0, reverse=True); print(d[0].get('rawOb'))")
+            echo "::notice title=METAR OK::$raw"
           else
-            echo "METAR fetch failed; publishing an empty list so the page hides the METAR card."
-            echo "[]" > _site/metar.json
+            # Keep the METAR that is already on the site rather than publishing nothing
+            if curl -fsS --max-time 20 -o prev.json "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/metar.json" && valid prev.json; then
+              mv prev.json _site/metar.json
+              echo "::warning title=METAR not updated::aviationweather.gov returned HTTP $code; kept the previous METAR"
+            else
+              echo "[]" > _site/metar.json
+              echo "::warning title=METAR unavailable::aviationweather.gov returned HTTP $code and no previous METAR was available"
+            fi
           fi
 
       - uses: actions/configure-pages@v5

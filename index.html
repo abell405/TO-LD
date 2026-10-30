@@ -349,7 +349,7 @@ function sel(el){const r=document.createRange();r.selectNodeContents(el.children
 $("vaTable").innerHTML=VO.slice().reverse().map(([w,v])=>`<tr><td>${w.toLocaleString("en-US")}</td><td>${v}</td></tr>`).join("");
 
 // ---- METAR (metar.json is published next to this page by a GitHub Actions job every 10 min) ----
-let METARS={};
+let METARS={}, metarLoaded=false;
 function parseMetar(m){
   const raw=m.rawOb||""; const o={raw,icao:m.icaoId,obs:m.obsTime?m.obsTime*1000:Date.parse(m.reportTime)};
   const w=raw.match(/\b(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT\b/);
@@ -361,7 +361,13 @@ function parseMetar(m){
 }
 function showMetar(){
   const icao=$("icao").value.trim().toUpperCase(), m=METARS[icao], box=$("metarBox");
-  if(!m){box.hidden=true;return}
+  if(!m){
+    if(!metarLoaded||!AIRPORTS[icao]){box.hidden=true;return}
+    box.hidden=false; $("metarLab").textContent=`Latest METAR · ${icao}`; $("metarRaw").textContent="No METAR available right now.";
+    $("metarAge").textContent=""; $("metarUse").hidden=true; $("metarNote").textContent="Use the current ATIS/AWOS. The page checks again every 5 minutes.";
+    return;
+  }
+  $("metarUse").hidden=false;
   box.hidden=false; $("metarLab").textContent=`Latest METAR · ${icao}`; $("metarRaw").textContent=m.raw;
   const mins=Math.round((Date.now()-m.obs)/60000);
   const age=$("metarAge"); age.textContent=isFinite(mins)?(mins<60?`${mins} min old`:`${Math.floor(mins/60)} h ${mins%60} min old`):"";
@@ -401,7 +407,8 @@ function loadMetar(){
   lastMetarLoad=Date.now();
   fetch("metar.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{
     if(!Array.isArray(d))return;
-    const next={}; d.forEach(m=>{if(m&&m.icaoId&&m.rawOb)next[m.icaoId.toUpperCase()]=parseMetar(m)});
+    metarLoaded=true;
+    const next={}; d.forEach(m=>{if(!(m&&m.icaoId&&m.rawOb))return;const x=parseMetar(m),k=m.icaoId.toUpperCase();if(!next[k]||x.obs>next[k].obs)next[k]=x});
     if(Object.keys(next).length)METARS=next;
     showMetar();
   }).catch(()=>{});
