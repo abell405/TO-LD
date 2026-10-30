@@ -1,6 +1,6 @@
 # Archer TO/LD Performance
 
-A takeoff and landing performance calculator for the Piper PA-28-181 Archer. Enter the airport, runway, weather and weights, and it fills in every field of the Pilotbase TO/LD Performance form.
+A takeoff and landing performance calculator for the Piper PA-28-181 Archer. Enter the airport, runway, weather and weights, and it fills in every field of a TO/LD performance form.
 
 **Live site:** https://abell405.github.io/TO-LD/
 
@@ -9,7 +9,7 @@ A takeoff and landing performance calculator for the Piper PA-28-181 Archer. Ent
 - Computes takeoff ground roll and takeoff over 50 ft (flaps 0° or 25°), and landing ground roll and landing over 50 ft.
 - Corrects for pressure altitude, temperature, weight, and headwind or tailwind, the same way the POH charts do.
 - Works out pressure altitude, density altitude, and headwind/tailwind and crosswind components.
-- Runway Length Required is the greater of 2,000 ft or takeoff roll + landing roll. T.O. and Ldg Distance Required are the chart distances, with no added margin.
+- Runway Length Required is the longer of the takeoff and landing distances. T.O. and Ldg Distance Required are the chart distances, with no added margin.
 - Checks wind limits (17 kt crosswind, 10 kt tailwind, 30 kt surface wind including gusts).
 - Adds a soft-field allowance (adjustable in Settings).
 - Shows maneuvering speed from a Vo-by-weight table, plus Vr / Vy / Vx.

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: EFB-style two-pane — inputs panel left, Pilotbase card right; stacks on phone */
+/* Layout: EFB-style two-pane — inputs panel left, form card right; stacks on phone */
 :root{
   --bg:#eef1f4; --panel:#ffffff; --line:#d5dbe2; --fg:#16202b; --muted:#5d6b7a;
   --field:#f6f8fa; --accent:#c26a00; --accent-ink:#ffffff; --accent-soft:#fdf0de;
@@ -64,7 +64,7 @@ details .fields{margin-top:10px}
 .chk.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
 .chk.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
 .chk.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
-/* form card, mirrors Pilotbase rows */
+/* form card */
 .card{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 12px}
 .cell{grid-column:span 3;min-width:0}
 .cell.t{grid-column:span 2}
@@ -95,7 +95,7 @@ header{position:relative}
 .val .tick{display:none;color:var(--ok);font:700 13px var(--f-body);margin-right:6px}
 .val.done .tick{display:inline}
 .val.done{border-color:var(--ok)}
-/* compact: one narrow column for iPad Split View beside Pilotbase */
+/* compact: one narrow column for iPad Split View */
 body.compact .wrap{max-width:440px;padding-block:10px 24px}
 body.compact header{margin-bottom:10px}
 body.compact h1{font-size:22px}
@@ -129,8 +129,9 @@ body.compact .foot{display:none}
 .metar code{display:block;font:500 13px/1.45 var(--f-num);color:var(--fg);white-space:pre-wrap;word-break:break-word}
 .metar .mfoot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px;font-size:12px;color:var(--muted)}
 .btn{font:600 14px var(--f-body);padding:8px 14px;border-radius:6px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer}
-table.va{border-collapse:collapse;font:500 12px var(--f-num);margin-top:6px}
-table.va td{padding:2px 8px;border-bottom:1px solid var(--line)}
+table.va{border-collapse:collapse;font:500 13px var(--f-num);margin-top:6px;font-variant-numeric:tabular-nums}
+table.va th{font:600 12px var(--f-body);color:var(--muted);text-align:right;padding:3px 14px;border-bottom:1px solid var(--line)}
+table.va td{text-align:right;padding:3px 14px;border-bottom:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -189,15 +190,15 @@ table.va td{padding:2px 8px;border-bottom:1px solid var(--line)}
           <div><label for="sLean">Lean at DA ≥</label><div class="unitwrap"><input id="sLean" inputmode="numeric" value="3000"><span class="unit">ft</span></div></div>
           <div><label for="sVar">Mag variation (E +)</label><div class="unitwrap"><input id="sVar" inputmode="decimal" value="0"><span class="unit">°</span></div></div>
           <div><label for="sXW">Max demo crosswind</label><div class="unitwrap"><input id="sXW" inputmode="numeric" value="17"><span class="unit">kt</span></div></div>
-          <div class="full hint">Distance Required = chart distance (no added margin). Runway Length Required is the greater of 2,000 ft or T.O. roll + Ldg roll. Leave variation 0 for ATIS/AWOS winds; use −6 at KPGD for METAR/TAF (true) winds. Va comes from the Vo table below.</div>
-          <div class="full"><table class="va" aria-label="Vo by weight"><tbody id="vaTable"></tbody></table></div>
+          <div class="full hint">Distance Required = chart distance (no added margin). Runway Length Required is the longer of the T.O. and Ldg distances. Leave variation 0 for ATIS/AWOS winds; use −6 at KPGD for METAR/TAF (true) winds. Va comes from the Vo table below.</div>
+          <div class="full"><table class="va" aria-label="Maneuvering speed by weight"><thead><tr><th scope="col">Weight (lb)</th><th scope="col">Vo (kt)</th></tr></thead><tbody id="vaTable"></tbody></table></div>
           <div class="full"><button type="button" id="reset" class="chips" style="all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:13px">Reset settings to defaults</button></div>
         </div>
       </details>
     </section>
 
     <section class="panel" aria-labelledby="outTitle">
-      <h2 class="ptitle" id="outTitle">Pilotbase form · tap a value to copy</h2>
+      <h2 class="ptitle" id="outTitle">TO/LD form · tap a value to copy</h2>
       <div class="outbar"><span>Tap a value to copy · ✓ = copied</span><button type="button" class="linkbtn" id="clearTicks">Clear ✓</button></div>
       <div class="checks" id="checks" aria-live="polite"></div>
       <div class="card" id="card"></div>
@@ -235,7 +236,7 @@ const normRwy=r=>{r=String(r).trim().toUpperCase();return r.replace(/^0+(?=\d)/,
 const IDS=["icao","rwy","oat","alt","wdir","wspd","gust","tow","ldw","oLen","oElev","oHdg",...Object.keys(SET_DEF)];
 let cond="Hard",flaps=0; const TICKS={};
 // Runway and PA-28-181 wind limits
-const LIMITS={minRwy:2000,minWidth:50,maxTail:10,maxWind:30};
+const LIMITS={minWidth:50,maxTail:10,maxWind:30};
 function save(){try{const o={cond,flaps};IDS.forEach(i=>o[i]=$(i).value);localStorage.setItem("told",JSON.stringify(o))}catch(e){}}
 function load(){try{const o=JSON.parse(localStorage.getItem("told")||"null");if(!o)return;IDS.forEach(i=>{if(o[i]!=null)$(i).value=o[i]});cond=o.cond||"Hard";flaps=+o.flaps||0}catch(e){}}
 function segSet(id,v){$(id).querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v==String(v))))}
@@ -261,8 +262,8 @@ function compute(){
   const o={vrb,icao,rwyRaw,tora,lda,elev,pa,da,hw,xw,side,tow,ldw,oat,alt,wdir,wspd,gust,
     toRoll:ceil10(toRoll+softTO), to50:ceil10(to50), toDist:ceil10(to50+softTO),
     ldRoll:ceil10(ldRoll+softLD), ld50:ceil10(ld50), ldDist:ceil10(ld50+softLD)};
-  // Runway must be at least the greater of 2,000 ft or T.O. roll + Ldg roll
-  o.toReq=o.toDist; o.ldReq=o.ldDist; o.rollSum=o.toRoll+o.ldRoll; o.rwyReq=Math.max(LIMITS.minRwy,o.rollSum);
+  // Runway Length Required = the longer of the takeoff and landing distances (over 50 ft)
+  o.toReq=o.toDist; o.ldReq=o.ldDist; o.rwyReq=Math.max(o.toDist,o.ldDist);
   let va=VO[0][1]; VO.forEach(([w,v])=>{if(tow>=w)va=v});
   o.va=va; o.vr=`${$("sVr").value} / ${$("sVy").value} / ${$("sVx").value}`; o.lean=da>=S("sLean")?"Yes":"No";
   o.ap=ap; o.rw=rw; o.isa=isa;
@@ -283,7 +284,7 @@ function render(){
   const rows=[
     ["sect","Airport"],
     ["ICAO",o.icao||"—","",""],["Runway #",o.rwyRaw||"—","",""],
-    ["Runway Length",fmt(o.tora),"ft","Takeoff length (TORA)",1,"t"],["Runway Length Required",fmt(o.rwyReq),"ft",o.rollSum>=LIMITS.minRwy?"T.O. roll + Ldg roll":"2,000 ft minimum (rolls total "+fmt(o.rollSum)+")",1,"t"],["Runway Condition",cond,"","",0,"t"],
+    ["Runway Length",fmt(o.tora),"ft","Takeoff length (TORA)",1,"t"],["Runway Length Required",fmt(o.rwyReq),"ft",o.toDist>=o.ldDist?"Longer of T.O. and Ldg distance (T.O.)":"Longer of T.O. and Ldg distance (Ldg)",1,"t"],["Runway Condition",cond,"","",0,"t"],
     ["sect","Weather"],
     ["OAT",isFinite(o.oat)?o.oat:"—","°C","",0,"t"],["Altimeter",isFinite(o.alt)?o.alt.toFixed(2):"—","inHg","",0,"t"],["Wind Direction and Speed",wind,"","",0,"t"],
     ["Pressure Altitude",fmt(Math.round(o.pa/10)*10),"ft","Elev + (29.92 − altimeter) × 1,000"],["Density Altitude",fmt(Math.round(o.da/10)*10),"ft","PA + 120 × (OAT − ISA)"],
@@ -345,8 +346,7 @@ function copy(text,el){
 function sel(el){const r=document.createRange();r.selectNodeContents(el.children[1]||el);const s=getSelection();s.removeAllRanges();s.addRange(r)}
 
 // va table
-$("vaTable").innerHTML="<tr>"+VO.slice().reverse().map(([w])=>`<td>${w}</td>`).join("")+"</tr><tr>"+VO.slice().reverse().map(([,v])=>`<td>${v}</td>`).join("")+"</tr>";
-document.querySelector("table.va").parentElement.style.overflowX="auto";
+$("vaTable").innerHTML=VO.slice().reverse().map(([w,v])=>`<tr><td>${w.toLocaleString("en-US")}</td><td>${v}</td></tr>`).join("");
 
 // ---- METAR (metar.json is published next to this page by a GitHub Actions job every 10 min) ----
 let METARS={};

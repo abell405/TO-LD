@@ -14,7 +14,7 @@ After ANY change to this project (code, airport data, settings, README), commit 
 - `metar.json` is not in the repo; the workflow creates it at deploy time. The page reads it, shows the METAR, and the "Use this METAR" button fills OAT, altimeter and wind exactly as the METAR reports it (no true-to-magnetic conversion, by the user's choice) and picks the runway most into the wind.
 - Density altitude formula (keep as is): DA = PA + 120 × (OAT − ISA), with ISA = 15 − 2 × PA/1,000.
 - `VO` is the maneuvering-speed (Vo) by weight table. `SET_DEF` holds the default settings (Vr 60, Vy 76, Vx 64, etc.).
-- `LIMITS` holds the runway and wind limits: Runway Length Required = greater of 2,000 ft or T.O. roll + Ldg roll; runway width ≥ 50 ft; PA-28-181 max tailwind 10 kt and max surface wind 30 kt incl. gusts. T.O./Ldg Distance Required equal the chart distances, with no added margin (user's choice).
+- `LIMITS` holds the runway and wind limits: Runway Length Required = the longer of T.O. distance and Ldg distance; runway width ≥ 50 ft; PA-28-181 max tailwind 10 kt and max surface wind 30 kt incl. gusts. T.O./Ldg Distance Required equal the chart distances, with no added margin (user's choice).
 
 ## Checks before pushing
 - Keep the chart math unchanged unless asked. It matches the POH printed examples within 0–2.5% (long side).
