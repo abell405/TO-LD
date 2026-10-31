@@ -103,7 +103,7 @@ body.compact .sub{display:none}
 body.compact .grid{grid-template-columns:minmax(0,1fr);gap:10px}
 body.compact .panel{padding:12px}
 body.compact .insum{display:flex}
-body.compact:not(.showin) #inPanel>.fields,body.compact:not(.showin) #inPanel>details,body.compact:not(.showin) #inTitle{display:none}
+body.compact:not(.showin) #inPanel>.fields,body.compact:not(.showin) #inPanel>details:not(.paste),body.compact:not(.showin) #inTitle{display:none}
 body.compact.showin .insum{margin-bottom:10px}
 body.compact .metar{margin-bottom:10px}
 body.compact #outTitle{display:none}
@@ -129,6 +129,13 @@ body.compact .foot{display:none}
 .metar code{display:block;font:500 13px/1.45 var(--f-num);color:var(--fg);white-space:pre-wrap;word-break:break-word}
 .metar .mfoot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px;font-size:12px;color:var(--muted)}
 .btn{font:600 14px var(--f-body);padding:8px 14px;border-radius:6px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.paste{margin:-6px 0 14px}
+.paste summary{font-size:13px}
+.paste textarea{display:block;width:100%;margin-top:8px;font:500 14px/1.4 var(--f-num);color:var(--fg);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px 10px;resize:vertical;min-height:64px;text-transform:uppercase}
+.paste textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.paste .prow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px}
+.paste .perr{font-size:12.5px;font-weight:600;color:var(--bad)}
+body.compact .paste{margin:-2px 0 10px}
 table.va{border-collapse:collapse;font:500 13px var(--f-num);margin-top:6px;font-variant-numeric:tabular-nums}
 table.va th{font:600 12px var(--f-body);color:var(--muted);text-align:right;padding:3px 14px;border-bottom:1px solid var(--line)}
 table.va td{text-align:right;padding:3px 14px;border-bottom:1px solid var(--line)}
@@ -150,6 +157,11 @@ table.va td{text-align:right;padding:3px 14px;border-bottom:1px solid var(--line
         <code id="metarRaw"></code>
         <div class="mfoot"><button type="button" class="btn" id="metarUse">Use this METAR</button><span id="metarNote">Fills OAT, altimeter and wind as reported, and picks the runway most into the wind.</span></div>
       </div>
+      <details class="paste" id="pasteBox">
+        <summary>Paste a METAR</summary>
+        <textarea id="pasteMetar" rows="2" spellcheck="false" autocapitalize="characters" autocomplete="off" placeholder="KPGD 311253Z 07009KT 10SM SCT035 BKN060 24/22 A3010"></textarea>
+        <div class="prow"><button type="button" class="btn" id="pasteUse">Use pasted METAR</button><span class="perr" id="pasteErr" role="alert"></span></div>
+      </details>
       <div class="insum"><span id="inSumText"></span><button type="button" class="linkbtn" id="inEdit">Edit inputs</button></div>
       <div class="fields">
         <div><label for="icao">ICAO</label><input id="icao" autocapitalize="characters" autocomplete="off" value="KPGD"></div>
@@ -374,10 +386,13 @@ function showMetar(){
   const mins=Math.round((Date.now()-m.obs)/60000);
   const age=$("metarAge"); age.textContent=isFinite(mins)?(mins<60?`${mins} min old`:`${Math.floor(mins/60)} h ${mins%60} min old`):"";
   age.className="age "+(mins>90?"old":"ok");
-  $("metarNote").textContent=mins>90?"Over 90 minutes old. Check the current ATIS/AWOS.":"Fills OAT, altimeter and wind as reported, and picks the runway most into the wind.";
+  $("metarNote").textContent=mins>90?"Over 90 minutes old. Check the current ATIS/AWOS, or paste a newer METAR below.":"Fills OAT, altimeter and wind as reported, and picks the runway most into the wind.";
 }
 function useMetar(){
   const icao=$("icao").value.trim().toUpperCase(), m=METARS[icao]; if(!m)return;
+  applyMetar(m,icao,"METAR applied");
+}
+function applyMetar(m,icao,label){
   if(m.temp!=null)$("oat").value=Math.round(m.temp);
   if(m.alt)$("alt").value=m.alt.toFixed(2);
   if(m.spd===0){$("wdir").value="0";$("wspd").value="0"}
@@ -387,7 +402,7 @@ function useMetar(){
   }
   $("gust").value=m.gust||"";
   $("sVar").value="0";
-  let msg="METAR applied";
+  let msg=label;
   const ap=AIRPORTS[icao];
   if(ap&&m.spd>0&&m.dir!=="VRB"){
     // pick the runway with the most headwind; ties (within 1 kt) go to less crosswind, then the longer runway
@@ -396,11 +411,28 @@ function useMetar(){
       const a=(wMag-d.hdg)*Math.PI/180, hw=m.spd*Math.cos(a), xw=Math.abs(m.spd*Math.sin(a));
       if(!best||hw>best.hw+1||(Math.abs(hw-best.hw)<=1&&(xw<best.xw-0.5||(Math.abs(xw-best.xw)<=0.5&&d.tora>best.len))))best={r,hw,xw,len:d.tora};
     });
-    if(best){$("rwy").value=best.r;$("oHdg").value="";msg=`METAR applied · Rwy ${best.r}`}
-  }else if(ap){msg="METAR applied · calm/variable, runway unchanged"}
+    if(best){$("rwy").value=best.r;$("oHdg").value="";msg=`${label} · Rwy ${best.r}`}
+  }else if(ap){msg=`${label} · calm/variable, runway unchanged`}
   render(); $("toast").textContent=msg; $("toast").classList.add("on"); setTimeout(()=>$("toast").classList.remove("on"),1200);
 }
 $("metarUse").addEventListener("click",useMetar);
+// Paste a METAR by hand (e.g. copied from another app) when the live one is behind
+function usePasted(){
+  const err=$("pasteErr"); err.textContent="";
+  let raw=$("pasteMetar").value.toUpperCase().replace(/\s+/g," ").trim().replace(/=$/,"");
+  if(!raw){err.textContent="Paste a METAR first.";return}
+  const tokens=raw.split(" "); let i=0;
+  if(tokens[i]==="METAR"||tokens[i]==="SPECI")i++;
+  const stn=/^[A-Z][A-Z0-9]{3}$/.test(tokens[i]||"")?tokens[i]:"";
+  const m=parseMetar({rawOb:raw,icaoId:stn});
+  const missing=[]; if(m.spd==null||(m.dir==null))missing.push("wind (e.g. 07009KT)"); if(m.temp==null)missing.push("temperature (e.g. 24/22)"); if(!m.alt)missing.push("altimeter (e.g. A3010)");
+  if(missing.length){err.textContent="Couldn't find the "+missing.join(", ")+". Check the METAR and try again.";return}
+  let icao=$("icao").value.trim().toUpperCase();
+  if(stn&&stn!==icao){$("icao").value=stn;icao=stn}
+  applyMetar(m,icao,"Pasted METAR applied");
+}
+$("pasteUse").addEventListener("click",usePasted);
+$("pasteMetar").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();usePasted()}});
 $("icao").addEventListener("input",showMetar);
 // Check every 2 minutes and whenever the page comes back on screen.
 // Live source: api.weather.gov (allows browser requests). Backup: metar.json from the site.

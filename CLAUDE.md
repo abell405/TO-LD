@@ -12,6 +12,7 @@ After ANY change to this project (code, airport data, settings, README), commit 
 - `AIRPORTS` (near the top of the script) holds airport and runway data: field elevation, and per runway end the magnetic heading, takeoff length (TORA) and landing length (LDA). A runway with `noAuto:true` is never chosen by the METAR runway auto-pick (KPGD 9/27, not primary runways) but can still be picked by hand.
 - `DATA` holds the digitized PA-28-181 POH Section 5 chart data (Report VB-2960). Don't edit it unless re-digitizing the charts.
 - The page fetches the METAR live from api.weather.gov (NWS, allows browser requests) every 2 minutes and on return to the tab; `metar.json` is the backup. The newest report from either source wins. GitHub's scheduler only runs the workflow every 40–60 min, so don't rely on it for freshness.
+- "Paste a METAR" (under the METAR card, also shown in Compact view) parses a pasted METAR/SPECI and applies it the same way as "Use this METAR" (OAT, altimeter, wind, runway pick); a different station ID switches the ICAO.
 - `metar.json` is not in the repo; the workflow creates it at deploy time. The page reads it, shows the METAR, and the "Use this METAR" button fills OAT, altimeter and wind exactly as the METAR reports it (no true-to-magnetic conversion, by the user's choice) and picks the runway most into the wind.
 - Density altitude formula (keep as is): DA = PA + 120 × (OAT − ISA), with ISA = 15 − 2 × PA/1,000.
 - `VO` is the maneuvering-speed (Vo) by weight table. `SET_DEF` holds the default settings (Vr 60, Vy 76, Vx 64, etc.).
