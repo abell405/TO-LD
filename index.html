@@ -348,7 +348,8 @@ function sel(el){const r=document.createRange();r.selectNodeContents(el.children
 // va table
 $("vaTable").innerHTML=VO.slice().reverse().map(([w,v])=>`<tr><td>${w.toLocaleString("en-US")}</td><td>${v}</td></tr>`).join("");
 
-// ---- METAR (metar.json is published next to this page by a GitHub Actions job every 10 min) ----
+// ---- METAR: fetched live from the National Weather Service in the browser, with metar.json
+// (published next to this page by the GitHub Actions job) as a backup. The newest report wins. ----
 let METARS={}, metarLoaded=false;
 function parseMetar(m){
   const raw=m.rawOb||""; const o={raw,icao:m.icaoId,obs:m.obsTime?m.obsTime*1000:Date.parse(m.reportTime)};
@@ -356,7 +357,8 @@ function parseMetar(m){
   if(w){o.dir=w[1];o.spd=+w[2];o.gust=w[3]?+w[3]:null}
   else{o.dir=m.wdir==="VRB"?"VRB":m.wdir;o.spd=m.wspd;o.gust=m.wgst||null}
   const a=raw.match(/\bA(\d{4})\b/); o.alt=a?+a[1]/100:(m.altim?+(m.altim/33.8639).toFixed(2):null);
-  o.temp=m.temp;
+  const t=raw.match(/\s(M?\d{2})\/(?:M?\d{2})?\s/);
+  o.temp=m.temp!=null?m.temp:(t?(t[1][0]==="M"?-1:1)*+t[1].replace("M",""):null);
   return o;
 }
 function showMetar(){
@@ -364,7 +366,7 @@ function showMetar(){
   if(!m){
     if(!metarLoaded||!AIRPORTS[icao]){box.hidden=true;return}
     box.hidden=false; $("metarLab").textContent=`Latest METAR · ${icao}`; $("metarRaw").textContent="No METAR available right now.";
-    $("metarAge").textContent=""; $("metarUse").hidden=true; $("metarNote").textContent="Use the current ATIS/AWOS. The page checks again every 5 minutes.";
+    $("metarAge").textContent=""; $("metarUse").hidden=true; $("metarNote").textContent="Use the current ATIS/AWOS. The page checks again every 2 minutes.";
     return;
   }
   $("metarUse").hidden=false;
@@ -400,23 +402,40 @@ function useMetar(){
 }
 $("metarUse").addEventListener("click",useMetar);
 $("icao").addEventListener("input",showMetar);
-// Reload metar.json every 5 minutes and whenever the page comes back on screen.
-// The ?t= query skips the browser and GitHub Pages caches so a newer report shows up right away.
+// Check every 2 minutes and whenever the page comes back on screen.
+// Live source: api.weather.gov (allows browser requests). Backup: metar.json from the site.
 let lastMetarLoad=0;
+function keepNewest(list){
+  let changed=false;
+  list.forEach(x=>{if(!x||!x.icao||!x.raw||!isFinite(x.obs))return;const k=x.icao.toUpperCase();
+    if(!METARS[k]||x.obs>METARS[k].obs){METARS[k]=x;changed=true}});
+  return changed;
+}
+function loadNws(icao){
+  return fetch(`https://api.weather.gov/stations/${icao}/observations?limit=5`,{cache:"no-store",headers:{Accept:"application/geo+json"}})
+    .then(r=>r.ok?r.json():null).then(d=>{
+      const out=[]; ((d&&d.features)||[]).forEach(f=>{const p=f.properties||{};
+        const raw=(p.rawMessage||"").trim(); if(!raw)return;
+        out.push(parseMetar({rawOb:raw,icaoId:icao,reportTime:p.timestamp}))});
+      return out;
+    }).catch(()=>[]);
+}
+function loadSiteJson(){
+  return fetch("metar.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>
+    Array.isArray(d)?d.filter(m=>m&&m.icaoId&&m.rawOb).map(parseMetar):[]).catch(()=>[]);
+}
 function loadMetar(){
   lastMetarLoad=Date.now();
-  fetch("metar.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{
-    if(!Array.isArray(d))return;
-    metarLoaded=true;
-    const next={}; d.forEach(m=>{if(!(m&&m.icaoId&&m.rawOb))return;const x=parseMetar(m),k=m.icaoId.toUpperCase();if(!next[k]||x.obs>next[k].obs)next[k]=x});
-    if(Object.keys(next).length)METARS=next;
-    showMetar();
-  }).catch(()=>{});
+  const icao=$("icao").value.trim().toUpperCase();
+  const ids=[...new Set(["KPGD",...(AIRPORTS[icao]?[icao]:[])])];
+  Promise.all([loadSiteJson(),...ids.map(loadNws)]).then(lists=>{
+    metarLoaded=true; keepNewest(lists.flat()); showMetar();
+  });
 }
 loadMetar();
 setInterval(showMetar,60000);
-setInterval(loadMetar,5*60000);
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-lastMetarLoad>60000)loadMetar()});
+setInterval(loadMetar,2*60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-lastMetarLoad>30000)loadMetar()});
 
 // ---- compact view (narrow column for iPad Split View) ----
 function setCompact(on){

@@ -61,6 +61,14 @@ jobs:
             fi
           fi
 
+      - name: Check the live NWS METAR source the page uses
+        continue-on-error: true
+        run: |
+          h=$(curl -sS --max-time 20 -D - -o nws.json -H "Origin: https://${{ github.repository_owner }}.github.io" -A "TO-LD calculator (github.com/${{ github.repository }})" "https://api.weather.gov/stations/KPGD/observations?limit=1" | tr -d '\r')
+          code=$(echo "$h" | head -1); cors=$(echo "$h" | grep -i '^access-control-allow-origin' || echo "no CORS header")
+          raw=$(python3 -c "import json; print(json.load(open('nws.json'))['features'][0]['properties'].get('rawMessage') or 'no raw METAR')" 2>/dev/null || echo "unreadable")
+          echo "::notice title=NWS check::$code | $cors | $raw"
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
