@@ -20,7 +20,7 @@ A takeoff and landing performance calculator for the Piper PA-28-181 Archer. Ent
 
 ## Data sources
 
-- **Performance:** PA-28-181 POH Section 5, Report VB-2960 (Figures 5-7, 5-9, 5-11, 5-13, 5-41, 5-43). The charts were digitized and checked against each chart's printed example. All six land within 0–2.5% of the POH, on the long (conservative) side, and results round up to the next 10 ft.
+- **Performance:** PA-28-181 POH Section 5, Report VB-2960 (Figures 5-7, 5-9, 5-11, 5-13, 5-41, 5-43). The charts were digitized and checked against each chart's printed example. All six land within 0–2.5% of the POH, on the long (conservative) side, and distances are rounded to the nearest 100 ft.
 - **KPGD runway data:** FAA-derived airport data, October 2026. Check it against the current Chart Supplement.
 
 These are planning numbers with the same limits as reading the charts by hand: paved, level, dry runway, POH technique, full throttle before brake release. Always use your judgment and the POH.
