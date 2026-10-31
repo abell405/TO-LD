@@ -412,7 +412,7 @@ function keepNewest(list){
   return changed;
 }
 function loadNws(icao){
-  return fetch(`https://api.weather.gov/stations/${icao}/observations?limit=5`,{cache:"no-store",headers:{Accept:"application/geo+json"}})
+  return fetch(`https://api.weather.gov/stations/${icao}/observations?limit=25`,{cache:"no-store",headers:{Accept:"application/geo+json"}})
     .then(r=>r.ok?r.json():null).then(d=>{
       const out=[]; ((d&&d.features)||[]).forEach(f=>{const p=f.properties||{};
         const raw=(p.rawMessage||"").trim(); if(!raw)return;
