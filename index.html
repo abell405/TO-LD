@@ -435,7 +435,8 @@ $("pasteUse").addEventListener("click",usePasted);
 $("pasteMetar").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();usePasted()}});
 $("icao").addEventListener("input",showMetar);
 // Check every 2 minutes and whenever the page comes back on screen.
-// Live source: api.weather.gov (allows browser requests). Backup: metar.json from the site.
+// Sources: the `metar` branch feed (aviationweather.gov, polled every 2 min by the METAR feed workflow),
+// api.weather.gov (allows browser requests), and metar.json from the site. The newest report wins.
 let lastMetarLoad=0;
 function keepNewest(list){
   let changed=false;
@@ -452,15 +453,18 @@ function loadNws(icao){
       return out;
     }).catch(()=>[]);
 }
-function loadSiteJson(){
-  return fetch("metar.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>
+function loadJson(url){
+  return fetch(url+"?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>
     Array.isArray(d)?d.filter(m=>m&&m.icaoId&&m.rawOb).map(parseMetar):[]).catch(()=>[]);
 }
+// metar.json beside the page (updated on deploy) and the `metar` branch feed (updated every few minutes)
+const loadSiteJson=()=>loadJson("metar.json");
+const loadFeed=()=>loadJson("https://raw.githubusercontent.com/abell405/TO-LD/metar/metar.json");
 function loadMetar(){
   lastMetarLoad=Date.now();
   const icao=$("icao").value.trim().toUpperCase();
   const ids=[...new Set(["KPGD",...(AIRPORTS[icao]?[icao]:[])])];
-  Promise.all([loadSiteJson(),...ids.map(loadNws)]).then(lists=>{
+  Promise.all([loadSiteJson(),loadFeed(),...ids.map(loadNws)]).then(lists=>{
     metarLoaded=true; keepNewest(lists.flat()); showMetar();
   });
 }

@@ -1,0 +1,68 @@
+# Keeps a fresh METAR feed for the page.
+# GitHub only starts scheduled workflows about once an hour, so each run stays
+# alive for ~70 minutes, checking aviationweather.gov every 2 minutes and
+# force-pushing metar.json to the `metar` branch whenever a newer report appears.
+# The page reads it from raw.githubusercontent.com (browser requests allowed).
+# A new run cancels the old one, so runs overlap instead of leaving gaps.
+name: METAR feed
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: metar-feed
+  cancel-in-progress: true
+
+env:
+  METAR_IDS: KPGD
+
+jobs:
+  feed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - name: Poll aviationweather.gov and publish to the metar branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          UA="TO-LD calculator (github.com/${REPO})"
+          URL="https://aviationweather.gov/api/data/metar?ids=${METAR_IDS}&format=json&hours=3"
+          mkdir feed && cd feed
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          last=""
+          end=$((SECONDS + 70*60))
+          while [ $SECONDS -lt $end ]; do
+            code=$(curl -sS --max-time 20 -A "$UA" -o ../metar.tmp -w "%{http_code}" "$URL" || echo "curl-error")
+            key=$(python3 -c "
+          import json
+          d=json.load(open('../metar.tmp'))
+          d=[m for m in d if isinstance(m,dict) and m.get('rawOb')]
+          print(' | '.join(sorted(m['rawOb'] for m in d)) if d else '')
+          " 2>/dev/null || true)
+            if [ "$code" = "200" ] && [ -n "$key" ]; then
+              if [ "$key" != "$last" ]; then
+                rm -rf .git metar.json
+                cp ../metar.tmp metar.json
+                git init -q -b metar
+                git add metar.json
+                git commit -qm "METAR update"
+                if git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" metar; then
+                  last="$key"
+                  newest=$(python3 -c "import json; d=json.load(open('metar.json')); d.sort(key=lambda m: m.get('obsTime') or 0, reverse=True); print(d[0]['rawOb'])")
+                  echo "$(date -u +%H:%MZ) published: $newest"
+                else
+                  echo "$(date -u +%H:%MZ) push failed"
+                fi
+              fi
+            else
+              echo "$(date -u +%H:%MZ) aviationweather.gov HTTP $code"
+            fi
+            sleep 120
+          done
